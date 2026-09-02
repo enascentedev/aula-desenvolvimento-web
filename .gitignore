@@ -1,0 +1,18 @@
+# dependencias e builds dos exemplos React
+node_modules/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+
+# arquivos temporarios do Office (aparecem enquanto o arquivo esta aberto)
+~$*
+
+# sistema
+Thumbs.db
+.DS_Store
+
+# skills baixadas de terceiros — a origem delas fica no skills-lock.json
+.agents/skills/
+.claude/
