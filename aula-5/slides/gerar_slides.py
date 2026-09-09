@@ -4,7 +4,7 @@ Gera os slides da Aula 05 - Navegando entre paginas (React Router).
 
 Estilo: dark tech / editor de codigo — o mesmo sistema visual da Aula 04.
 Conteudo: continua o projeto de login da aula anterior, agora com rotas
-(14 slides).
+e com um guardiao de rota protegendo a Home (32 slides).
 
 Uso:
     python gerar_slides.py
@@ -80,7 +80,7 @@ CODE_LH_IN = 19 / 72.0    # a mesma coisa, em polegadas
 W = 13.333   # polegadas
 H = 7.5
 M = 0.62     # margem lateral
-TOTAL_SLIDES = 14
+TOTAL_SLIDES = 32
 
 
 # -------------------------------------------------------- INSTITUCIONAL ----
@@ -238,6 +238,8 @@ KNOWN_FUNCS = {
     "preventDefault", "handleSubmit", "Login", "App", "console",
     "useNavigate", "navigate", "Home", "BrowserRouter", "Routes", "Route",
     "Link", "createRoot", "getElementById", "render",
+    "Navigate", "RotaPrivada", "NaoEncontrada", "localStorage", "setItem",
+    "getItem", "removeItem", "sair", "setLogado",
 }
 
 JS_RE = re.compile(
@@ -292,7 +294,8 @@ def tokenize_css(line):
     stripped = line.strip()
     if not stripped:
         return [(line, C_PUNCT)]
-    if stripped.startswith("/*"):
+    # tambem pega a continuacao de um comentario de duas linhas
+    if stripped.startswith("/*") or stripped.endswith("*/"):
         return [(line, C_COMMENT)]
     if stripped == "}":
         return [(line, C_PUNCT)]
@@ -321,11 +324,14 @@ def tokenize_css(line):
 # ------------------------------------------------------ PAINEL DE CODIGO ----
 
 def code_panel(slide, x, y, w, h, filename, lines, highlight=None, lang="js",
-               size=CODE_SIZE, line_h=CODE_LH):
+               size=CODE_SIZE, line_h=CODE_LH, start=1):
     """
     Painel escuro com barra de janela e o codigo dentro.
     highlight = (primeira_linha, ultima_linha) com indice 0, inclusive.
     As linhas fora do destaque ficam apagadas.
+    start = numero da primeira linha no gutter. So nao e 1 quando o arquivo
+    continua num segundo painel (ver slide_codigo_duplo): a numeracao precisa
+    seguir de onde parou, senao a segunda coluna parece outro arquivo.
     """
     bar_h = 0.42
     pad_x = 0.32
@@ -364,7 +370,7 @@ def code_panel(slide, x, y, w, h, filename, lines, highlight=None, lang="js",
         p.line_spacing = line_h
         p.space_before = Pt(0)
         p.space_after = Pt(0)
-        style_run(p.add_run(), str(i + 1), size,
+        style_run(p.add_run(), str(i + start), size,
                   ACCENT if foco else TEXT_FAINT, font=MONO, bold=foco)
 
     tokenizer = tokenize_css if lang == "css" else tokenize_js
@@ -633,8 +639,14 @@ def slide_codigo(prs, n, eyebrow, termo, filename, lines, highlight, blocos,
     return slide
 
 
-def slide_codigo_duplo(prs, n, eyebrow, termo, filename, col_a, col_b, lang="css"):
-    """Codigo longo em duas colunas."""
+def slide_codigo_duplo(prs, n, eyebrow, termo, filename, col_a, col_b,
+                       lang="css", legenda=None):
+    """Um arquivo longo em duas colunas — a da direita CONTINUA a da esquerda.
+
+    A numeracao do gutter segue corrida (a coluna B comeca onde a A parou) e a
+    janela da direita se anuncia como continuacao. Sem isso as duas colunas
+    numeram a partir de 1 e parecem dois arquivos diferentes, cada um cortado.
+    """
     slide = add_slide(prs)
 
     eyebrow_pill(slide, eyebrow)
@@ -643,10 +655,15 @@ def slide_codigo_duplo(prs, n, eyebrow, termo, filename, col_a, col_b, lang="css
 
     gap = 0.3
     cw = (W - 2 * M - gap) / 2
-    code_panel(slide, M, 1.62, cw, 5.05, filename, col_a, lang=lang,
+    code_panel(slide, M, 1.62, cw, 5.05, f"{filename}   (1)", col_a, lang=lang,
                size=Pt(11.5), line_h=Pt(15.5))
-    code_panel(slide, M + cw + gap, 1.62, cw, 5.05, filename, col_b, lang=lang,
-               size=Pt(11.5), line_h=Pt(15.5))
+    code_panel(slide, M + cw + gap, 1.62, cw, 5.05,
+               f"{filename}   (2)  continuação", col_b, lang=lang,
+               size=Pt(11.5), line_h=Pt(15.5), start=len(col_a) + 1)
+
+    if legenda:
+        tf = textbox(slide, M, 6.72, W - 2 * M, 0.3)
+        rich_para(tf, legenda, Pt(12), first=True)
 
     chrome(slide, n)
     return slide
@@ -790,7 +807,16 @@ CODE_HOME = [
     "}",
 ]
 
+# CSS_HOME_A + CSS_HOME_B sao o Home.css inteiro do slide 12, linha por linha,
+# sem nenhum corte: A vai da linha 1 a 19 e B pega da 20 ate o fim. A numeracao
+# do gutter segue corrida (ver slide_codigo_duplo) — se as duas colunas
+# comecarem em 1, o aluno acha que esta vendo dois pedacos soltos.
+# O estilo do botao Sair (.cartao .sair) nasce so no slide 20, junto com ele.
+
 CSS_HOME_A = [
+    "/* a Home tem o proprio container: ela nao",
+    "   depende do Login.css para existir */",
+    "",
     ".container-home {",
     "  display: flex;",
     "  justify-content: center;",
@@ -803,13 +829,14 @@ CSS_HOME_A = [
     "  background: white;",
     "  padding: 2rem;",
     "  border-radius: 8px;",
-    "  box-shadow: 0 2px 10px rgba(0,0,0,0.1);",
+    "  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);",
     "  width: 300px;",
     "  text-align: center;",
     "}",
 ]
 
 CSS_HOME_B = [
+    "",
     ".cartao h2 {",
     "  margin-top: 0;",
     "}",
@@ -828,7 +855,136 @@ CSS_HOME_B = [
 ]
 
 
+# --- a partir daqui: o guardiao de rota (slides 13 a 22) --------------------
+
+CODE_LOGIN_SESSAO = [
+    "  ...",
+    "",
+    '    if (email === "user@email.com" &&',
+    '        senha === "123456") {',
+    '      setErro("");',
+    "      // marca a sessao como aberta",
+    '      localStorage.setItem("logado", "true");',
+    '      navigate("/home");',
+    "    } else {",
+    '      setErro("E-mail ou senha incorretos.");',
+    "    }",
+    "  }",
+    "",
+    "  ...",
+]
+
+CODE_ROTA_PRIVADA = [
+    'import { Navigate } from "react-router-dom";',
+    "",
+    "function RotaPrivada({ children }) {",
+    "  const logado =",
+    '    localStorage.getItem("logado") === "true";',
+    "",
+    "  if (!logado) {",
+    '    return <Navigate to="/" replace />;',
+    "  }",
+    "",
+    "  return children;",
+    "}",
+    "",
+    "export default RotaPrivada;",
+]
+
+CODE_APP_GUARDA = [
+    "  ...",
+    'import RotaPrivada from "./RotaPrivada";',
+    "",
+    "function App() {",
+    "  return (",
+    "    <Routes>",
+    '      <Route path="/" element={<Login />} />',
+    '      <Route path="/home" element={',
+    "        <RotaPrivada><Home /></RotaPrivada>",
+    "      } />",
+    "    </Routes>",
+    "  );",
+    "}",
+]
+
+CODE_APP_404 = [
+    "  ...",
+    'import NaoEncontrada from "./NaoEncontrada";',
+    "",
+    "function App() {",
+    "  return (",
+    "    <Routes>",
+    '      <Route path="/" element={<Login />} />',
+    '      <Route path="/home" element={',
+    "        <RotaPrivada><Home /></RotaPrivada>",
+    "      } />",
+    '      <Route path="*"',
+    "             element={<NaoEncontrada />} />",
+    "    </Routes>",
+    "  ...",
+]
+
+CODE_HOME_SAIR = [
+    'import { useNavigate } from "react-router-dom";',
+    "  ...",
+    "function Home() {",
+    "  const navigate = useNavigate();",
+    "",
+    "  function sair() {",
+    '    localStorage.removeItem("logado");',
+    '    navigate("/");',
+    "  }",
+    "",
+    "  ...",
+    '        <button className="sair" onClick={sair}>',
+    "          Sair",
+    "        </button>",
+]
+
+CODE_NAO_ENCONTRADA = [
+    'import { Link } from "react-router-dom";',
+    "// reaproveita o cartao da Home",
+    'import "./Home.css";',
+    "",
+    "function NaoEncontrada() {",
+    "  return (",
+    '    <div className="container-home">',
+    '      <div className="cartao">',
+    "        <h2>404</h2>",
+    "        <p>Esta página não existe.</p>",
+    '        <Link to="/">Voltar ao login</Link>',
+    "      </div>",
+    "    </div>",
+    "  );",
+]
+
+CSS_SAIR = [
+    ".cartao .sair {",
+    "  margin-top: 1rem;",
+    "  background: none;",
+    "  border: none;",
+    "  padding: 0;",
+    "  font: inherit;",
+    "  color: #4f46e5;",
+    "  font-weight: bold;",
+    "  cursor: pointer;",
+    "}",
+    "",
+    ".cartao .sair:hover {",
+    "  text-decoration: underline;",
+    "}",
+]
+
+
 def build(destino):
+    """Monta o deck.
+
+    A aula e um passo a passo: o aluno tem que conseguir reconstruir o projeto
+    inteiro so com os slides. Por isso o deck e dividido em quatro etapas, cada
+    uma anunciada por um slide de roteiro (o que abrir, o que escrever, como
+    testar), e todo arquivo do projeto aparece em algum painel de codigo.
+    O conferir_codigo.py, ao lado deste arquivo, verifica as duas coisas.
+    """
     prs = new_deck()
 
     # 01 - capa
@@ -841,39 +997,54 @@ def build(destino):
         author=f"{PROFESSOR}  ·  {ESCOLA}",
     )
 
-    # 02 - tres cartoes
+    # 02 - o mapa da aula
+    slide_passos(
+        prs, 2, "Navegando entre páginas", "O que vamos construir hoje", "",
+        [
+            [("Ligar o ", TEXT), ("React Router", TEXT, True),
+             (" no projeto da aula 4 e desenhar o mapa das telas.", TEXT)],
+            [("Fazer o login ", TEXT), ("levar", TEXT, True),
+             (" para uma segunda página — e a segunda página ter volta.", TEXT)],
+            [("Trancar essa página: ", TEXT), ("sem login, ninguém entra", TEXT, True),
+             (" — e o Sair passa a sair de verdade.", TEXT)],
+            [("Cuidar dos endereços que não existem e entender ", TEXT),
+             ("por que nada disso é segurança", TEXT, True), (".", TEXT)],
+        ],
+    )
+
+    # 03 - tres cartoes
     slide_cartoes(
-        prs, 2, "Navegando entre páginas", "Preparando o terreno",
+        prs, 3, "Navegando entre páginas", "Preparando o terreno",
         [
             {
                 "titulo": "Instalando",
                 "texto": "Na aula passada montamos a tela de login. Vamos "
-                         "continuar naquele mesmo projeto: abra a pasta dele no "
-                         "terminal e instale a biblioteca de rotas do React.",
+                         "continuar naquele mesmo projeto: abra a pasta dele "
+                         "no terminal e instale a biblioteca de rotas.",
                 "comando": ["npm install react-router-dom"],
                 "nota": "Depois de instalar, rode npm run dev de novo.",
             },
             {
                 "titulo": "Criando",
-                "texto": "Se o login vai levar para algum lugar, esse lugar "
-                         "precisa existir. Vamos criar dois arquivos novos "
-                         "dentro da pasta src: a nossa segunda página e o "
-                         "estilo dela.",
-                "comando": ["Home.jsx", "Home.css"],
+                "texto": "Quatro arquivos novos vão nascer dentro da pasta "
+                         "src ao longo da aula: a segunda página, o estilo "
+                         "dela, o guardião e a página de erro.",
+                "comando": ["Home.jsx", "Home.css", "RotaPrivada.jsx",
+                            "NaoEncontrada.jsx"],
             },
             {
-                "titulo": "Ligando",
-                "texto": "E vamos mexer em dois arquivos que já existem: o "
-                         "main.jsx, para ligar o sistema de rotas, e o App.jsx, "
-                         "que vira o mapa das telas da aplicação.",
-                "comando": ["main.jsx", "App.jsx"],
+                "titulo": "Mexendo",
+                "texto": "E três arquivos que já existem vão mudar: o "
+                         "main.jsx liga o Router, o App.jsx vira o mapa das "
+                         "telas e o Login.jsx aprende a navegar.",
+                "comando": ["main.jsx", "App.jsx", "Login.jsx"],
             },
         ],
     )
 
-    # 03 - conceito SPA
+    # 04 - conceito SPA
     slide_conceito(
-        prs, 3, "React Router", "Uma página só, várias telas",
+        prs, 4, "React Router", "Uma página só, várias telas",
         [("A página ", TEXT_DIM),
          ("nunca recarrega", TEXT, True),
          (" — o React troca o que aparece na tela.", TEXT_DIM)],
@@ -888,9 +1059,28 @@ def build(destino):
                 ("Componente", "<Home />", ACCENT)],
     )
 
-    # 04 - import
+    # 05 - roteiro da etapa 1
+    slide_passos(
+        prs, 5, "Etapa 1 de 4", "Ligar o Router",
+        "Dois arquivos que já existem. Nenhuma tela muda ainda: isto é "
+        "encanamento, e sem ele nada do resto funciona.",
+        [
+            [("Abra ", TEXT), ("src/main.jsx", C_VAR, True, MONO),
+             (" e importe o ", TEXT), ("BrowserRouter", C_TAG, True, MONO),
+             (" do react-router-dom.", TEXT)],
+            [("Envolva o ", TEXT), ("<App />", C_TAG, True, MONO),
+             (" com ele, dentro do render.", TEXT)],
+            [("Abra ", TEXT), ("src/App.jsx", C_VAR, True, MONO),
+             (" e troque o ", TEXT), ("<Login />", C_TAG, True, MONO),
+             (" por um ", TEXT), ("<Routes>", C_TAG, True, MONO),
+             (" com duas rotas dentro.", TEXT)],
+        ],
+        marcadores=["A", "B", "C"],
+    )
+
+    # 06 - import
     slide_codigo(
-        prs, 4, "Ligando o Router  ·  main.jsx", "import",
+        prs, 6, "Ligando o Router  ·  main.jsx", "import",
         "main.jsx", CODE_MAIN_TOPO, (2, 2),
         ["Tudo começa importando o que acabamos de instalar. Repare que o nome "
          "entre chaves é BrowserRouter, mas o pacote se chama react-router-dom.",
@@ -901,9 +1091,9 @@ def build(destino):
          "de volta para o login. Não precisamos programar nada para isso."],
     )
 
-    # 05 - BrowserRouter
+    # 07 - BrowserRouter
     slide_codigo(
-        prs, 5, "Ligando o Router  ·  main.jsx", "BrowserRouter",
+        prs, 7, "Ligando o Router  ·  main.jsx", "BrowserRouter",
         "main.jsx", CODE_MAIN_RENDER, (6, 8),
         ["O BrowserRouter é um componente que ABRAÇA a aplicação inteira. Ele "
          "não desenha nada na tela: só fica de olho na barra de endereços.",
@@ -916,9 +1106,9 @@ def build(destino):
          "os componentes de rota estão fora de um Router."],
     )
 
-    # 06 - Routes
+    # 08 - Routes
     slide_codigo(
-        prs, 6, "O mapa da aplicação  ·  App.jsx", "Routes",
+        prs, 8, "O mapa da aplicação  ·  App.jsx", "Routes",
         "App.jsx", CODE_APP, (6, 9),
         ["Na aula passada o App.jsx só chamava o <Login />. Agora ele vira o "
          "mapa da nossa aplicação.",
@@ -929,9 +1119,9 @@ def build(destino):
          "Uma de cada vez — nunca duas ao mesmo tempo."],
     )
 
-    # 07 - Route
+    # 09 - Route
     slide_codigo(
-        prs, 7, "O mapa da aplicação  ·  App.jsx", "Route",
+        prs, 9, "O mapa da aplicação  ·  App.jsx", "Route",
         "App.jsx", CODE_APP, (7, 8),
         ["Cada Route é uma linha do mapa, e ela sempre tem duas partes.",
          [("path", C_VAR, True, MONO),
@@ -948,9 +1138,29 @@ def build(destino):
               (". Sem a barra vira caminho relativo.", TEXT_DIM)],
     )
 
-    # 08 - useNavigate
+    # 10 - roteiro da etapa 2
+    slide_passos(
+        prs, 10, "Etapa 2 de 4", "Navegar entre as telas",
+        "Agora o projeto ganha a segunda página e o caminho de ida e volta "
+        "até ela.",
+        [
+            [("Crie ", TEXT), ("src/Home.jsx", C_VAR, True, MONO),
+             (" e ", TEXT), ("src/Home.css", C_VAR, True, MONO),
+             (" — a página de destino e o estilo dela.", TEXT)],
+            [("No ", TEXT), ("Login.jsx", C_VAR, True, MONO),
+             (", chame o ", TEXT), ("useNavigate", C_FUNC, True, MONO),
+             (" e troque o alert por ", TEXT),
+             ('navigate("/home")', C_FUNC, True, MONO), (".", TEXT)],
+            [("Na Home, um ", TEXT), ('<Link to="/">', C_TAG, True, MONO),
+             (" para voltar. Teste entrando, voltando e usando as setas do "
+              "navegador.", TEXT)],
+        ],
+        marcadores=["A", "B", "C"],
+    )
+
+    # 11 - useNavigate
     slide_codigo(
-        prs, 8, "Saindo do login  ·  Login.jsx", "useNavigate",
+        prs, 11, "Saindo do login  ·  Login.jsx", "useNavigate",
         "Login.jsx", CODE_LOGIN_TOPO, (9, 10),
         ["O Login.jsx continua igualzinho ao da aula passada: os mesmos "
          "useState, o mesmo handleSubmit, o mesmo botão de mostrar senha.",
@@ -963,9 +1173,9 @@ def build(destino):
          "navigate) que usamos quando quisermos trocar de página."],
     )
 
-    # 09 - navigate
+    # 12 - navigate
     slide_codigo(
-        prs, 9, "Saindo do login  ·  Login.jsx", 'navigate("/home")',
+        prs, 12, "Saindo do login  ·  Login.jsx", 'navigate("/home")',
         "Login.jsx", CODE_NAVIGATE, (5, 5),
         ["Lembra desse if da aula passada? Ele é exatamente o mesmo. Só a "
          "linha do sucesso mudou.",
@@ -980,9 +1190,9 @@ def build(destino):
                "navegar por clique existe o Link — próximo slide.", TEXT_DIM)],
     )
 
-    # 10 - Home.jsx
+    # 13 - Home.jsx
     slide_codigo(
-        prs, 10, "A página de destino", "Home.jsx",
+        prs, 13, "A página de destino", "Home.jsx",
         "Home.jsx", CODE_HOME, None,
         ["Esta é a nossa segunda tela. Repare que ela não tem nada de "
          "especial: é um componente comum, igual ao Login.",
@@ -996,9 +1206,9 @@ def build(destino):
                "componente no App.jsx.", TEXT_DIM)],
     )
 
-    # 11 - Link
+    # 14 - Link
     slide_codigo(
-        prs, 11, "A página de destino  ·  Home.jsx", "Link",
+        prs, 14, "A página de destino  ·  Home.jsx", "Link",
         "Home.jsx", CODE_HOME, (9, 9),
         [[("O ", TEXT_DIM), ("<Link>", C_TAG, True, MONO),
           (" é o link do React Router. Ele vira um ", TEXT_DIM),
@@ -1011,42 +1221,339 @@ def build(destino):
           ("href", C_VAR, True, MONO), (".", TEXT_DIM)]],
     )
 
-    # 12 - CSS da Home
+    # 15 - CSS da Home
     slide_codigo_duplo(
-        prs, 12, "A página de destino", "Home.css", "Home.css",
+        prs, 15, "A página de destino", "Home.css", "Home.css",
         CSS_HOME_A, CSS_HOME_B, lang="css",
     )
 
-    # 13 - recapitulando
+    # 16 - roteiro da etapa 3
     slide_passos(
-        prs, 13, "Recapitulando", "O caminho inteiro, em quatro passos", "",
+        prs, 16, "Etapa 3 de 4", "Trancar a porta",
+        "O coração da aula. Hoje a Home abre para qualquer um que digite o "
+        "endereço; no fim desta etapa, não abre mais.",
         [
-            [("Instalar: ", TEXT),
-             ("npm install react-router-dom", C_FUNC, True, MONO)],
-            [("Abraçar o App com ", TEXT), ("<BrowserRouter>", C_TAG, True, MONO),
-             (" no main.jsx.", TEXT)],
-            [("Mapear as telas com ", TEXT), ("<Routes>", C_TAG, True, MONO),
-             (" e ", TEXT), ("<Route>", C_TAG, True, MONO),
-             (" no App.jsx.", TEXT)],
-            [("Navegar: ", TEXT), ("navigate()", C_FUNC, True, MONO),
-             (" por código, ", TEXT), ("<Link>", C_TAG, True, MONO),
-             (" por clique.", TEXT)],
+            [("No ", TEXT), ("Login.jsx", C_VAR, True, MONO), (", grave a "
+              "sessão com ", TEXT), ("localStorage.setItem", C_FUNC, True, MONO),
+             (" antes de navegar.", TEXT)],
+            [("Crie ", TEXT), ("src/RotaPrivada.jsx", C_VAR, True, MONO),
+             (" e embrulhe a Home com ele no ", TEXT),
+             ("App.jsx", C_VAR, True, MONO), (".", TEXT)],
+            [("No ", TEXT), ("Home.jsx", C_VAR, True, MONO),
+             (", troque o Link de Sair por um botão que apaga a sessão — e "
+              "ajuste o ", TEXT), ("Home.css", C_VAR, True, MONO), (".", TEXT)],
+        ],
+        marcadores=["A", "B", "C"],
+    )
+
+    # 17 - o furo
+    slide_conceito(
+        prs, 17, "Um problema", "A porta está destrancada",
+        [("Digite ", TEXT_DIM), ("/home", C_STRING, True, MONO),
+         (" na barra de endereços sem fazer login. A página abre.", TEXT_DIM)],
+        ["Isso não é um bug do React Router: é ele fazendo exatamente o que "
+         "mandamos. O Route diz que a URL /home desenha a Home, e ninguém "
+         "escreveu nenhuma condição além disso.",
+         "O mesmo vale para o Sair: ele leva de volta ao login, mas nada foi "
+         "desligado — basta digitar /home outra vez para estar dentro.",
+         "Falta alguém entre a URL e a tela: um componente que pergunte "
+         "\u201cesta pessoa entrou?\u201d antes de deixar a Home aparecer."],
+        labels=[("A URL", "/home", C_STRING),
+                ("O Route", "element={<Home />}", C_TAG),
+                ("O resultado", "entrou sem login", ERR)],
+    )
+
+    # 18 - onde mora a sessao
+    slide_cartoes(
+        prs, 18, "Guardando a sessão", "Onde mora o “eu entrei”?",
+        [
+            {
+                "titulo": "No useState?",
+                "texto": "Seria o caminho natural: um estado no App dizendo "
+                         "se a pessoa entrou. Só que estado de React vive na "
+                         "memória da página, e um F5 zera tudo.",
+                "comando": ["useState(false)"],
+                "nota": "Não serve: um F5 e o usuário está fora.",
+            },
+            {
+                "titulo": "No localStorage",
+                "texto": "É uma gavetinha do próprio navegador. Sobrevive ao "
+                         "F5, a fechar a aba e a fechar o navegador. Guarda "
+                         "texto, e só texto. Três métodos dão conta de tudo.",
+                "comando": ["setItem(chave, valor)", "getItem(chave)",
+                            "removeItem(chave)"],
+                "nota": "Veja no DevTools: Application → Local Storage.",
+            },
+            {
+                "titulo": "O que guardar",
+                "texto": "Por enquanto, uma marca simples: a chave logado com "
+                         "o texto \u201ctrue\u201d. Quando o back-end em "
+                         "FastAPI existir, aqui vai morar o token que ele "
+                         "devolve no login.",
+                "comando": ['logado = "true"'],
+            },
         ],
     )
 
-    # 14 - trabalho
+    # 19 - Login.jsx abre a sessao
+    slide_codigo(
+        prs, 19, "Abrindo a sessão  ·  Login.jsx", "setItem",
+        "Login.jsx", CODE_LOGIN_SESSAO, (5, 6),
+        ["O if do login continua o mesmo. Antes de navegar, ele agora deixa um "
+         "bilhete guardado no navegador: a sessão está aberta.",
+         [("O ", TEXT_DIM), ("setItem", C_FUNC, True, MONO),
+          (" grava um par chave/valor. Os dois são texto — por isso ", TEXT_DIM),
+          ('"true"', C_STRING, True, MONO),
+          (" vai entre aspas, e não o booleano true.", TEXT_DIM)],
+         "O nome da chave é escolha nossa. O que não pode é escrever um nome "
+         "aqui e outro na hora de conferir: são as duas pontas do mesmo "
+         "combinado."],
+        nota=[("A ordem importa: ", TEXT_DIM), ("setItem", C_FUNC, True, MONO),
+              (" antes do ", TEXT_DIM), ("navigate", C_FUNC, True, MONO),
+              (". Navegar primeiro é chegar na porta sem o bilhete na mão.",
+               TEXT_DIM)],
+    )
+
+    # 20 - RotaPrivada: o componente que decide
+    slide_codigo(
+        prs, 20, "O guardião de rota  ·  RotaPrivada.jsx", "children",
+        "RotaPrivada.jsx", CODE_ROTA_PRIVADA, (2, 4),
+        ["Este é o guardião, e ele cabe em um arquivo pequeno: um componente "
+         "que não desenha nada de si mesmo. Ele só decide.",
+         [("Tudo que você escreve ", TEXT_DIM), ("entre", TEXT, True),
+          (" as tags de um componente chega dentro dele na prop ", TEXT_DIM),
+          ("children", C_VAR, True, MONO),
+          (". É a mesma ideia de uma <div> que embrulha outros elementos.",
+           TEXT_DIM)],
+         [("A conferência é uma linha só. Repare no ", TEXT_DIM),
+          ('=== "true"', C_PUNCT, True, MONO),
+          (": o localStorage devolve texto, nunca booleano.", TEXT_DIM)]],
+        nota=[("getItem", C_FUNC, True, MONO), (" devolve ", TEXT_DIM),
+              ("null", C_KEYWORD, True, MONO),
+              (" quando a chave não existe — e null não é \u201ctrue\u201d, "
+               "então quem não entrou cai no if.", TEXT_DIM)],
+    )
+
+    # 21 - Navigate
+    slide_codigo(
+        prs, 21, "O guardião de rota  ·  RotaPrivada.jsx", "<Navigate />",
+        "RotaPrivada.jsx", CODE_ROTA_PRIVADA, (6, 8),
+        [[("Sem sessão, o guardião devolve um ", TEXT_DIM),
+          ("<Navigate />", C_TAG, True, MONO),
+          (" no lugar da tela. Renderizar esse componente É o "
+           "redirecionamento.", TEXT_DIM)],
+         [("Dois nomes parecidos, papéis diferentes: ", TEXT_DIM),
+          ("navigate()", C_FUNC, True, MONO),
+          (" é a função do useNavigate, para usar dentro de uma ação; ",
+           TEXT_DIM), ("<Navigate />", C_TAG, True, MONO),
+          (" é o componente, para usar no meio do JSX — onde não dá para "
+           "chamar função.", TEXT_DIM)],
+         [("O ", TEXT_DIM), ("replace", C_VAR, True, MONO),
+          (" substitui a entrada atual do histórico em vez de empilhar outra. "
+           "Sem ele, o botão voltar devolveria a pessoa para /home e o "
+           "guardião a expulsaria de novo: um pingue-pongue.", TEXT_DIM)]],
+    )
+
+    # 22 - App.jsx embrulha a rota
+    slide_codigo(
+        prs, 22, "O mapa protegido  ·  App.jsx", "RotaPrivada",
+        "App.jsx", CODE_APP_GUARDA, (7, 9),
+        ["Agora o guardião entra no mapa. O element da rota /home deixa de ser "
+         "a Home solta e passa a ser a Home embrulhada.",
+         [("Só o que está dentro do embrulho fica protegido. A rota ", TEXT_DIM),
+          ('"/"', C_STRING, True, MONO),
+          (" continua livre — e tem que continuar, senão ninguém chega nem no "
+           "login.", TEXT_DIM)],
+         "Para proteger uma terceira tela amanhã, é a mesma linha: embrulha e "
+         "pronto. O guardião não sabe — nem precisa saber — qual componente "
+         "está protegendo."],
+        nota=[("Teste agora: ", TEXT_DIM), ("/home", C_STRING, True, MONO),
+              (" na barra, sem login, tem que cair de volta na tela de "
+               "entrada.", TEXT_DIM)],
+    )
+
+    # 23 - sair de verdade
+    slide_codigo(
+        prs, 23, "Fechando a sessão  ·  Home.jsx", "sair()",
+        "Home.jsx", CODE_HOME_SAIR, (5, 8),
+        [[("Com o guardião ligado, o ", TEXT_DIM), ("<Link>", C_TAG, True, MONO),
+          (" de Sair virou uma mentira: ele volta para o login, mas a sessão "
+           "continua aberta. Digite /home e você entra sem senha.", TEXT_DIM)],
+         "Sair é uma AÇÃO, não uma navegação: primeiro apaga o bilhete, depois "
+         "navega. Por isso o Link vira um botão com onClick — e o useNavigate, "
+         "que você já conhece do Login, reaparece aqui na Home.",
+         [("O ", TEXT_DIM), ("removeItem", C_FUNC, True, MONO),
+          (" apaga a chave. Do lado de lá, o guardião volta a encontrar null e "
+           "tranca a porta.", TEXT_DIM)]],
+        nota=[("Cuidado com o nome da chave: ", TEXT_DIM),
+              ('"logado"', C_STRING, True, MONO),
+              (" aqui e no Login. Um erro de digitação e o Sair não sai.",
+               TEXT_DIM)],
+    )
+
+    # 24 - o botao que parece link
+    slide_codigo(
+        prs, 24, "Fechando a sessão  ·  Home.css", ".sair",
+        "Home.css", CSS_SAIR, (2, 5),
+        ["Trocar o link por um botão conserta o comportamento, mas estraga a "
+         "aparência: o navegador desenha botão com fundo cinza, borda e fonte "
+         "própria.",
+         [("Estas quatro linhas são um ", TEXT_DIM), ("reset", TEXT, True),
+          (": tiram o fundo, a borda e o respiro interno, e mandam o botão "
+           "herdar a fonte do resto da página. O que sobra é um texto "
+           "clicável.", TEXT_DIM)],
+         [("O ", TEXT_DIM), ("cursor: pointer", C_VAR, True, MONO),
+          (" devolve a mãozinha, que o link tem e o botão não.", TEXT_DIM)]],
+        lang="css",
+        nota=[("Escreva no fim do Home.css, sem apagar nada do que já estava "
+               "lá: as regras do .cartao continuam valendo.", TEXT_DIM)],
+    )
+
+    # 25 - roteiro da etapa 4
     slide_passos(
-        prs, 14, "E agora?", "O teu trabalho", "",
+        prs, 25, "Etapa 4 de 4", "Endereços que não existem",
+        "Duas pontas soltas antes de fechar a aula.",
+        [
+            [("No ", TEXT), ("App.jsx", C_VAR, True, MONO),
+             (", uma rota coringa ", TEXT), ('path="*"', C_VAR, True, MONO),
+             (" para tudo que não bateu com as outras.", TEXT)],
+            [("Crie ", TEXT), ("src/NaoEncontrada.jsx", C_VAR, True, MONO),
+             (", a página 404, com um ", TEXT), ("<Link>", C_TAG, True, MONO),
+             (" de volta para o login.", TEXT)],
+            [("Teste o furo que ", TEXT), ("sobra", TEXT, True),
+             (": forje a chave no console do navegador e veja o guardião "
+              "ceder.", TEXT)],
+        ],
+        marcadores=["A", "B", "C"],
+    )
+
+    # 26 - rota coringa
+    slide_codigo(
+        prs, 26, "Endereços que não existem  ·  App.jsx", 'path="*"',
+        "App.jsx", CODE_APP_404, (10, 11),
+        [[("E se alguém digitar ", TEXT_DIM), ("/hom", C_STRING, True, MONO),
+          ("? Nenhuma rota bate, o Routes não desenha nada e a tela fica em "
+           "branco — sem uma linha de erro no console.", TEXT_DIM)],
+         [("O ", TEXT_DIM), ('path="*"', C_VAR, True, MONO),
+          (" é o coringa: casa com qualquer endereço. Escrevemos por último "
+           "para ler bem, mas a ordem não muda nada — o Router escolhe sempre "
+           "a rota mais específica, não a primeira que encontra.", TEXT_DIM)],
+         "Repare que a rota coringa fica FORA do guardião: uma página de erro "
+         "que exigisse login não faria sentido nenhum."],
+    )
+
+    # 27 - a pagina 404
+    slide_codigo(
+        prs, 27, "Endereços que não existem", "NaoEncontrada.jsx",
+        "NaoEncontrada.jsx", CODE_NAO_ENCONTRADA, (10, 10),
+        ["A página de erro é o componente mais simples do projeto: um cartão, "
+         "um aviso e o caminho de volta.",
+         [("Ela importa o ", TEXT_DIM), ("Home.css", C_VAR, True, MONO),
+          (" de propósito: as classes ", TEXT_DIM),
+          (".container-home", C_SELECTOR, True, MONO), (" e ", TEXT_DIM),
+          (".cartao", C_SELECTOR, True, MONO),
+          (" já fazem exatamente o que precisamos. CSS se reaproveita entre "
+           "telas.", TEXT_DIM)],
+         [("E aqui o ", TEXT_DIM), ("<Link>", C_TAG, True, MONO),
+          (" continua vivo: ir para o login é uma navegação comum, sem nada "
+           "para desligar antes.", TEXT_DIM)]],
+        nota=[("Não esqueça o ", TEXT_DIM),
+              ("export default NaoEncontrada;", C_FUNC, True, MONO),
+              (" no fim do arquivo.", TEXT_DIM)],
+    )
+
+    # 28 - o limite do front-end
+    slide_conceito(
+        prs, 28, "O limite do front-end", "Isto não é segurança",
+        [("O guardião protege a ", TEXT_DIM), ("tela", TEXT, True),
+         (" — nunca os ", TEXT_DIM), ("dados", TEXT, True), (".", TEXT_DIM)],
+        [[("Abra o Console do DevTools e digite ", TEXT_DIM),
+          ('localStorage.setItem("logado", "true")', C_FUNC, True, MONO),
+          (". Recarregue /home: a porta abre. Ninguém fez login.", TEXT_DIM)],
+         "A chave que o guardião confere mora no navegador do visitante — e o "
+         "visitante manda no próprio navegador.",
+         "Guardião de rota é experiência do usuário. Segurança é o servidor "
+         "recusar os dados — e é isso que vamos construir no back-end em "
+         "Python com FastAPI."],
+        labels=[("A tela protegida", "RotaPrivada", ACCENT),
+                ("A marca no navegador", "localStorage", C_VAR),
+                ("Ainda assim", "forjável em 10s", ERR)],
+    )
+
+    # 29 - o teste final
+    slide_passos(
+        prs, 29, "Antes de fechar o notebook", "Testando o que construímos", "",
+        [
+            [("Sem login, digite ", TEXT), ("/home", C_STRING, True, MONO),
+             (" na barra: tem que cair na tela de entrada.", TEXT)],
+            [("Entre com ", TEXT), ("user@email.com", C_STRING, True, MONO),
+             (" e ", TEXT), ("123456", C_STRING, True, MONO),
+             (": a Home abre e a URL vira /home.", TEXT)],
+            [("Aperte ", TEXT), ("F5", TEXT, True),
+             (" na Home: você continua dentro, porque a sessão está no "
+              "localStorage.", TEXT)],
+            [("Clique em ", TEXT), ("Sair", TEXT, True),
+             (" e tente /home de novo: tem que barrar. Se não barrar, a chave "
+              "não foi apagada.", TEXT)],
+        ],
+    )
+
+    # 30 - quando der errado
+    slide_passos(
+        prs, 30, "Quando der errado", "Os quatro erros de sempre", "",
+        [
+            [("Erro ", TEXT), ("useNavigate() may be used only in the context "
+              "of a <Router>", C_STRING, True, MONO),
+             (": faltou o BrowserRouter no main.jsx.", TEXT)],
+            [("O navigate não leva a lugar nenhum: o texto dele e o ", TEXT),
+             ("path", C_VAR, True, MONO),
+             (" do Route têm que ser idênticos, barra inclusive.", TEXT)],
+            [("Entra sem login mesmo com o guardião: a chave ficou salva de um "
+              "teste anterior. Apague em ", TEXT),
+             ("DevTools → Application", TEXT, True), (".", TEXT)],
+            [("Tela branca ao abrir /home: o ", TEXT),
+             ("RotaPrivada.jsx", C_VAR, True, MONO),
+             (" precisa terminar com ", TEXT),
+             ("return children;", C_FUNC, True, MONO),
+             (" — sem isso ele não desenha nada.", TEXT)],
+        ],
+    )
+
+    # 31 - recapitulando
+    slide_passos(
+        prs, 31, "Recapitulando", "O caminho inteiro, em quatro passos", "",
+        [
+            [("Abraçar o App com ", TEXT), ("<BrowserRouter>", C_TAG, True, MONO),
+             (" no main.jsx, depois do npm install.", TEXT)],
+            [("Mapear as telas com ", TEXT), ("<Routes>", C_TAG, True, MONO),
+             (" e ", TEXT), ("<Route>", C_TAG, True, MONO),
+             (" no App.jsx, sem esquecer o coringa ", TEXT),
+             ('path="*"', C_VAR, True, MONO), (".", TEXT)],
+            [("Navegar: ", TEXT), ("navigate()", C_FUNC, True, MONO),
+             (" por código, ", TEXT), ("<Link>", C_TAG, True, MONO),
+             (" por clique.", TEXT)],
+            [("Proteger: ", TEXT), ("<RotaPrivada>", C_TAG, True, MONO),
+             (" embrulhando a rota, e o Sair apagando a sessão.", TEXT)],
+        ],
+    )
+
+    # 32 - trabalho
+    slide_passos(
+        prs, 32, "E agora?", "O teu trabalho", "",
         [
             [("Criar uma ", TEXT), ("terceira página", TEXT, True),
              (" no projeto — o assunto dela é escolha tua.", TEXT)],
-            [("Registrar a rota dela no App.jsx, com o ", TEXT),
-             ("path", C_VAR, True, MONO), (" e o ", TEXT),
-             ("element", C_VAR, True, MONO), (" que você quiser.", TEXT)],
-            [("Colocar um ", TEXT), ("<Link>", C_TAG, True, MONO),
+            [("Registrar a rota dela no App.jsx e pôr um ", TEXT),
+             ("<Link>", C_TAG, True, MONO),
              (" na Home levando até ela — e outro de volta.", TEXT)],
+            [("Proteger a rota nova com o ", TEXT),
+             ("<RotaPrivada>", C_TAG, True, MONO),
+             (", do mesmo jeito que fizemos com a Home.", TEXT)],
+            [("Testar o furo: digite o endereço da página nova ", TEXT),
+             ("sem ter feito login", TEXT, True),
+             (". Tem que cair na tela de entrada.", TEXT)],
         ],
-        destaque_ultimo=False,
+        destaque_ultimo=True,
     )
 
     prs.save(destino)

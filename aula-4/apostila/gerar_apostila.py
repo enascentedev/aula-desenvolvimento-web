@@ -400,7 +400,8 @@ def conteudo(doc):
           "Login e senha de teste: user@email.com / 123456. Essa validação "
           "está no front-end só para aprendermos o useState — em uma "
           "aplicação de verdade, quem confere login e senha é o servidor. "
-          "É exatamente isso que faremos com o back-end em C# mais adiante.")
+          "É exatamente isso que faremos com o back-end em Python com FastAPI "
+          "mais adiante.")
 
     # ---------------------------------------------------------- 4
     h1(doc, "4. Etapa 2 — Botão mostrar / ocultar senha")

@@ -1,4 +1,5 @@
-/* a Home tem o proprio container: ela nao depende do Login.css para existir */
+/* a Home tem o proprio container: ela nao
+   depende do Login.css para existir */
 
 .container-home {
   display: flex;
@@ -30,5 +31,23 @@
 }
 
 .cartao a:hover {
+  text-decoration: underline;
+}
+
+/* o Sair e um <button>, mas queremos que ele
+   pareca o link que era antes */
+
+.cartao .sair {
+  margin-top: 1rem;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: #4f46e5;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.cartao .sair:hover {
   text-decoration: underline;
 }

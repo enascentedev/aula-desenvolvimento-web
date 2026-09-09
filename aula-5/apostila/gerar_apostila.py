@@ -596,8 +596,8 @@ def conteudo(doc):
           "página abre. Isso não é um defeito do React Router — é o que "
           "acontece quando a única verificação de acesso está no front-end. "
           "Quem decide se alguém pode ver uma tela é o servidor, e é isso que "
-          "vamos construir com o back-end em C# do sistema de ponto "
-          "eletrônico.")
+          "vamos construir no back-end em Python com FastAPI do sistema "
+          "de ponto eletrônico.")
 
     # ------------------------------------------------------------------ 7 --
     h1(doc, "Como entregar")
@@ -670,8 +670,8 @@ def conteudo(doc):
 
     paragrafo(doc,
               "Na próxima aula começamos o outro lado da história: o back-end "
-              "em C# do sistema de ponto eletrônico — quem vai, de verdade, "
-              "conferir a senha e decidir quem entra.",
+              "em Python com FastAPI — quem vai, de verdade, conferir a "
+              "senha e decidir quem entra.",
               italico=True, cor=CINZA)
 
 

@@ -7,7 +7,7 @@ Uma pasta por aula, cada uma com os slides, a apostila do trabalho e o
 código-exemplo daquele encontro.
 
 O fio condutor do curso é um **sistema de ponto eletrônico**: React no front-end,
-C# + REST API + banco no back-end. Cada aula acrescenta uma peça desse sistema.
+Python + FastAPI + banco no back-end. Cada aula acrescenta uma peça desse sistema.
 
 ## As aulas
 
@@ -33,7 +33,7 @@ Credenciais de teste do login: `user@email.com` / `123456`.
 
 > A conferência de e-mail e senha acontece no front-end **apenas como exercício
 > didático**. Numa aplicação real isso nunca se faz — a autenticação de verdade
-> é o que vamos construir com o back-end em C#.
+> é o que vamos construir com o back-end em Python com FastAPI.
 
 ## Regenerando slides e apostilas
 

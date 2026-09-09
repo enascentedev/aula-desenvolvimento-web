@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Material didático da disciplina **Programação Web 2** (Escola Técnica Mesquita), ministrada por **Emanuel Nascente**. Não é um produto de software: é um acervo de aulas, uma pasta por aula (`aula-3/`, `aula-4/`, `aula-5/`…), cada uma contendo slides, apostila e o código-exemplo daquele encontro.
 
-O fio condutor do curso é um **sistema de ponto eletrônico** (React no front, C# + REST API + banco no back). Material novo deve manter essa continuidade e ser assinado como Emanuel Nascente — os PDFs antigos de `aula-3/` trazem "Luiz Gomes", o professor anterior.
+O fio condutor do curso é um **sistema de ponto eletrônico** (React no front, Python + FastAPI + banco no back). Material novo deve manter essa continuidade e ser assinado como Emanuel Nascente — os PDFs antigos de `aula-3/` trazem "Luiz Gomes", o professor anterior.
 
 Toda assinatura institucional usa **Escola Técnica Mesquita** e **Emanuel Nascente**, sem exceção: capa, rodapé de slide e rodapé de apostila. Nas apostilas isso é a constante `ESCOLA`; nos slides, `ESCOLA` e `PROFESSOR`.
 
@@ -38,6 +38,16 @@ Dependências: `python-pptx`, `python-docx` (já instaladas globalmente; não h�
 
 Ao criar material novo, **reutilize esses helpers em vez de recomeçar do zero**. Fontes confirmadas nesta máquina: Bahnschrift SemiBold Condensed (display), Cascadia Mono (código), Segoe UI, Consolas.
 
+Na aula 5 os slides são o **guia de construção** do aluno: ele tem que
+conseguir digitar o projeto inteiro olhando só para o telão. Quem garante isso é
+`aula-5/slides/conferir_codigo.py`, que compara os painéis de código com
+`exemplo-rotas/src` nas duas direções — *fidelidade* (o que está no slide existe
+no projeto) e *cobertura* (o que está no projeto aparece em algum slide) — e
+ainda checa se cada bloco cabe no painel. Rode-o depois de mexer no gerador ou
+no exemplo; ele sai com código 1 se achar divergência. Quando um slide mostra de
+propósito um estágio anterior do arquivo, declare a linha em
+`so_neste_estagio`, com o slide onde isso acontece.
+
 `gerar_apostila.py` segue o mesmo espírito para A4 (capa, sumário como campo do Word, numeração de página). O sumário só preenche as páginas quando o usuário abre o `.docx` e escolhe "Atualizar campo".
 
 ### 2. Código-exemplo React (`aula-N/exemplo-*/`)
@@ -61,4 +71,4 @@ Stack fixa e propositalmente mínima: React 18.3 + Vite 5, JSX, CSS puro por com
 
 O código dos exemplos é lido em voz alta na aula e copiado pelos alunos — clareza didática vence elegância. Nomes de variáveis, estado e comentários em **português** (`senha`, `verSenha`, `erro`, `handleSubmit`); nomes de API do React ficam como são.
 
-Quando um exemplo faz algo que não se faria em produção — a conferência de e-mail e senha no front-end da aula 4 é o caso — o README do exemplo precisa dizer isso explicitamente e apontar para onde o assunto será retomado de verdade (o back-end em C#).
+Quando um exemplo faz algo que não se faria em produção — a conferência de e-mail e senha no front-end da aula 4 é o caso — o README do exemplo precisa dizer isso explicitamente e apontar para onde o assunto será retomado de verdade (o back-end em Python com FastAPI).

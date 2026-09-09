@@ -22,6 +22,8 @@ function Login() {
 
     if (email === "user@email.com" && senha === "123456") {
       setErro("");
+      // marca a sessao aberta: e isso que o guardiao de rota vai conferir
+      localStorage.setItem("logado", "true");
       navigate("/home");
     } else {
       setErro("E-mail ou senha incorretos.");
