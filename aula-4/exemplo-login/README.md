@@ -38,4 +38,4 @@ didático de `useState`**. Numa aplicação real isso nunca se faz: qualquer
 pessoa abre o código-fonte no navegador e lê a senha.
 
 A autenticação de verdade acontece no servidor — é o que vamos construir com o
-back-end em C# do sistema de ponto eletrônico.
+back-end em Python com FastAPI do sistema de ponto eletrônico.
