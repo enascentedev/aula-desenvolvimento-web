@@ -318,11 +318,13 @@ def tokenize_css(line):
 # ------------------------------------------------------ PAINEL DE CODIGO ----
 
 def code_panel(slide, x, y, w, h, filename, lines, highlight=None, lang="js",
-               size=CODE_SIZE, line_h=CODE_LH):
+               size=CODE_SIZE, line_h=CODE_LH, first_line=1):
     """
     Painel escuro com barra de janela e o codigo dentro.
     highlight = (primeira_linha, ultima_linha) com indice 0, inclusive.
     As linhas fora do destaque ficam apagadas.
+    first_line = numero da primeira linha no gutter (para listagens que
+    continuam em outro painel).
     """
     bar_h = 0.42
     pad_x = 0.32
@@ -361,7 +363,7 @@ def code_panel(slide, x, y, w, h, filename, lines, highlight=None, lang="js",
         p.line_spacing = line_h
         p.space_before = Pt(0)
         p.space_after = Pt(0)
-        style_run(p.add_run(), str(i + 1), size,
+        style_run(p.add_run(), str(i + first_line), size,
                   ACCENT if foco else TEXT_FAINT, font=MONO, bold=foco)
 
     tokenizer = tokenize_css if lang == "css" else tokenize_js
