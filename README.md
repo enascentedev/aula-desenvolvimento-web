@@ -16,6 +16,7 @@ Python + FastAPI + banco no back-end. Cada aula acrescenta uma peça desse siste
 | [aula-3](aula-3/) | Cliente-servidor, por que React, instalação do ambiente | PDFs |
 | [aula-4](aula-4/) | Primeira página: `Login.jsx`, `useState`, `handleSubmit`, CSS | slides, apostila, [exemplo-login](aula-4/exemplo-login/) |
 | [aula-5](aula-5/) | Rotas: `BrowserRouter`, `Routes`/`Route`, `useNavigate`, `Link` | slides, apostila, [exemplo-rotas](aula-5/exemplo-rotas/) |
+| [aula-6](aula-6/) | A API de login: Python + FastAPI, `uv` e venv, testes no Swagger (`/docs`) | slides, [api-login](aula-6/api-login/) |
 
 ## Rodando um exemplo
 
@@ -35,6 +36,19 @@ Credenciais de teste do login: `user@email.com` / `123456`.
 > didático**. Numa aplicação real isso nunca se faz — a autenticação de verdade
 > é o que vamos construir com o back-end em Python com FastAPI.
 
+## Rodando a API (aula 6 em diante)
+
+O back-end é um projeto Python gerenciado pelo [uv](https://docs.astral.sh/uv/).
+
+```powershell
+cd aula-6/api-login
+uv sync                     # cria a .venv e instala as dependências
+.venv\Scriptsctivate      # ativa o ambiente virtual
+fastapi dev main.py
+```
+
+Com o servidor ligado, teste a rota no Swagger: http://127.0.0.1:8000/docs
+
 ## Regenerando slides e apostilas
 
 **A fonte de verdade é o script `.py`. O `.pptx` e o `.docx` são saída** — nunca
@@ -43,6 +57,7 @@ edite o binário à mão; altere o script e rode de novo.
 ```bash
 python aula-5/slides/gerar_slides.py       # -> Aula05-Navegando-Entre-Paginas.pptx
 python aula-5/apostila/gerar_apostila.py   # -> Trabalho-Rotas-Aula05.docx
+python aula-6/slides/gerar_slides.py       # -> Aula06-API-Login-FastAPI.pptx
 ```
 
 Dependências: `python-pptx` e `python-docx`.

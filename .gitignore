@@ -6,6 +6,9 @@ dist/
 __pycache__/
 *.pyc
 
+# ambiente virtual criado pelo uv venv (cada aluno recria com uv sync)
+.venv/
+
 # arquivos temporarios do Office (aparecem enquanto o arquivo esta aberto)
 ~$*
 
